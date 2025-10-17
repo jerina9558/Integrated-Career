@@ -1,0 +1,453 @@
+[33mcommit 34281a34706cf4d5e7a4bc1280b0348d6ec82ad3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: jerina9558 <2312021@nec.edu.in>
+Date:   Fri Oct 17 16:38:23 2025 +0530
+
+    Initial commit without secrets
+
+[1mdiff --git a/Jenkinsfile b/Jenkinsfile[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6eba4bd[m
+[1m--- /dev/null[m
+[1m+++ b/Jenkinsfile[m
+[36m@@ -0,0 +1,39 @@[m
+[32m+[m[32mpipeline {[m
+[32m+[m[32m    agent any[m
+[32m+[m[32m    environment {[m
+[32m+[m[32m        DB_USER = credentials('DB_USER')       // Jenkins credentials[m
+[32m+[m[32m        DB_PASSWORD = credentials('DB_PASSWORD')[m
+[32m+[m[32m        API_KEY = credentials('API_KEY')[m
+[32m+[m[32m    }[m
+[32m+[m[32m    stages {[m
+[32m+[m[32m        stage('Checkout') {[m
+[32m+[m[32m            steps {[m
+[32m+[m[32m                git 'https://github.com/jerina9558/Student-Portal.git'[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m        stage('Build Frontend') {[m
+[32m+[m[32m            steps {[m
+[32m+[m[32m                dir('frontend') {[m
+[32m+[m[32m                    bat 'npm install'[m
+[32m+[m[32m                    bat 'npm run build'[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m        stage('Build Backend') {[m
+[32m+[m[32m            steps {[m
+[32m+[m[32m                dir('backend') {[m
+[32m+[m[32m                    bat 'npm install'[m
+[32m+[m[32m                    // optional: npm run build[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m        stage('Deploy') {[m
+[32m+[m[32m            steps {[m
+[32m+[m[32m                // Run backend[m
+[32m+[m[32m                dir('backend') {[m
+[32m+[m[32m                    bat 'node server.js'[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/.env b/backend/.env[m
+[1mnew file mode 100644[m
+[1mindex 0000000..eecc21d[m
+[1m--- /dev/null[m
+[1m+++ b/backend/.env[m
+[36m@@ -0,0 +1,10 @@[m
+[32m+[m[32mJWT_SECRET="your_jwt_secret_here"[m
+[32m+[m[32mGMAIL_USER="your_email_here"[m
+[32m+[m[32mGMAIL_APP_PASSWORD="your_app_password_here"[m
+[32m+[m[32mDB_HOST="localhost"[m
+[32m+[m[32mDB_USER="your_db_user_here"[m
+[32m+[m[32mDB_PASSWORD="your_db_password_here"[m
+[32m+[m[32mDB_NAME="your_db_name_here"[m
+[32m+[m[32mFRONTEND_URL="http://localhost:5173"[m
+[32m+[m[32mREMOVED=your_google_client_id_here[m
+[32m+[m[32mREMOVED=your_google_client_secret_here[m
+[1mdiff --git a/backend/.env.example b/backend/.env.example[m
+[1mnew file mode 100644[m
+[1mindex 0000000..eecc21d[m
+[1m--- /dev/null[m
+[1m+++ b/backend/.env.example[m
+[36m@@ -0,0 +1,10 @@[m
+[32m+[m[32mJWT_SECRET="your_jwt_secret_here"[m
+[32m+[m[32mGMAIL_USER="your_email_here"[m
+[32m+[m[32mGMAIL_APP_PASSWORD="your_app_password_here"[m
+[32m+[m[32mDB_HOST="localhost"[m
+[32m+[m[32mDB_USER="your_db_user_here"[m
+[32m+[m[32mDB_PASSWORD="your_db_password_here"[m
+[32m+[m[32mDB_NAME="your_db_name_here"[m
+[32m+[m[32mFRONTEND_URL="http://localhost:5173"[m
+[32m+[m[32mREMOVED=your_google_client_id_here[m
+[32m+[m[32mREMOVED=your_google_client_secret_here[m
+[1mdiff --git a/backend/Dockerfile b/backend/Dockerfile[m
+[1mnew file mode 100644[m
+[1mindex 0000000..3be5e15[m
+[1m--- /dev/null[m
+[1m+++ b/backend/Dockerfile[m
+[36m@@ -0,0 +1,7 @@[m
+[32m+[m[32mFROM node:20[m
+[32m+[m[32mWORKDIR /app[m
+[32m+[m[32mCOPY package*.json ./[m
+[32m+[m[32mRUN npm install[m
+[32m+[m[32mCOPY . .[m
+[32m+[m[32mEXPOSE 5000[m
+[32m+[m[32mCMD ["npm", "start"][m
+[1mdiff --git a/backend/config/db.js b/backend/config/db.js[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6e7ebaf[m
+[1m--- /dev/null[m
+[1m+++ b/backend/config/db.js[m
+[36m@@ -0,0 +1,20 @@[m
+[32m+[m[32mconst mysql = require("mysql2");[m
+[32m+[m[32mrequire("dotenv").config();[m
+[32m+[m
+[32m+[m[32mconst db = mysql.createConnection({[m
+[32m+[m[32m  host: process.env.DB_HOST,[m
+[32m+[m[32m  user: process.env.DB_USER,[m
+[32m+[m[32m  password: process.env.DB_PASSWORD,[m
+[32m+[m[32m  database: process.env.DB_NAME,[m
+[32m+[m[32m});[m
+[32m+[m
+[32m+[m[32mdb.connect(err => {[m
+[32m+[m[32m  if (err) {[m
+[32m+[m[32m    console.error("❌ MySQL connection error:", err);[m
+[32m+[m[32m    process.exit(1);[m
+[32m+[m[32m  } else {[m
+[32m+[m[32m    console.log("✅ MySQL connected");[m
+[32m+[m[32m  }[m
+[32m+[m[32m});[m
+[32m+[m
+[32m+[m[32mmodule.exports = db;[m
+[1mdiff --git a/backend/controllers/authController.js b/backend/controllers/authController.js[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e9822ef[m
+[1m--- /dev/null[m
+[1m+++ b/backend/controllers/authController.js[m
+[36m@@ -0,0 +1,148 @@[m
+[32m+[m[32mconst db = require("../config/db");[m
+[32m+[m[32mconst bcrypt = require("bcrypt");[m
+[32m+[m[32mconst crypto = require("crypto");[m
+[32m+[m[32mconst nodemailer = require("nodemailer");[m
+[32m+[m
+[32m+[m[32mconst RESET_TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour[m
+[32m+[m
+[32m+[m[32mconst transporter = nodemailer.createTransport({[m
+[32m+[m[32m  service: "gmail",[m
+[32m+[m[32m  auth: {[m
+[32m+[m[32m    user: process.env.GMAIL_USER,[m
+[32m+[m[32m    pass: process.env.GMAIL_APP_PASSWORD,[m
+[32m+[m[32m  },[m
+[32m+[m[32m});[m
+[32m+[m
+[32m+[m[32m// ----------------------------[m
+[32m+[m[32m// SIGNUP[m
+[32m+[m[32m// ----------------------------[m
+[32m+[m[32mexports.signupStudent = async (req, res) => {[m
+[32m+[m[32m  const { username, email, password, phone } = req.body;[m
+[32m+[m[32m  if (!username || !email || !password || !phone) return res.status(400).json({ error: "All fields required" });[m
+[32m+[m
+[32m+[m[32m  const hashedPassword = await bcrypt.hash(password, 10);[m
+[32m+[m
+[32m+[m[32m  db.query([m
+[32m+[m[32m    "INSERT INTO students (username, email, password, phone) VALUES (?, ?, ?, ?)",[m
+[32m+[m[32m    [username, email, hashedPassword, phone],[m
+[32m+[m[32m    (err, result) => {[m
+[32m+[m[32m      if (err) return res.status(500).json({ error: "Signup failed" });[m
+[32m+[m[32m      res.json({ message: "Student registered successfully" });[m
+[32m+[m[32m    }[m
+[32m+[m[32m  );[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32mexports.signupEmployer = async (req, res) => {[m
+[32m+[m[32m  const { username, email, password, phone } = req.body;[m
+[32m+[m[32m  if (!username || !email || !password || !phone) return res.status(400).json({ error: "All fields required" });[m
+[32m+[m
+[32m+[m[32m  const hashedPassword = await bcrypt.hash(password, 10);[m
+[32m+[m
+[32m+[m[32m  db.query([m
+[32m+[m[32m    "INSERT INTO employers (username, email, password, phone) VALUES (?, ?, ?, ?)",[m
+[32m+[m[32m    [username, email, hashedPassword, phone],[m
+[32m+[m[32m    (err, result) => {[m
+[32m+[m[32m      if (err) return res.status(500).json({ error: "Signup failed" });[m
+[32m+[m[32m      res.json({ message: "Employer registered successfully" });[m
+[32m+[m[32m    }[m
+[32m+[m[32m  );[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32m// ----------------------------[m
+[32m+[m[32m// LOGIN[m
+[32m+[m[32m// ----------------------------[m
+[32m+[m[32mexports.loginStudent = (req, res) => {[m
+[32m+[m[32m  const { email, password } = req.body;[m
+[32m+[m[32m  db.query("SELECT * FROM students WHERE email = ?", [email], async (err, results) => {[m
+[32m+[m[32m    if (err) return res.status(500).json({ error: "Database error" });[m
+[32m+[m[32m    if (!results.length) return res.status(400).json({ error: "Invalid credentials" });[m
+[32m+[m
+[32m+[m[32m    const student = results[0];[m
+[32m+[m[32m    const match = await bcrypt.compare(password, student.password);[m
+[32m+[m[32m    if (!match) return res.status(400).json({ error: "Invalid credentials" });[m
+[32m+[m
+[32m+[m[32m    res.json({ id: student.id, username: student.username, email: student.email, role: "student" });[m
+[32m+[m[32m  });[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32mexports.loginEmployer = (req, res) => {[m
+[32m+[m[32m  const { email, password } = req.body;[m
+[32m+[m[32m  db.query("SELECT * FROM employers WHERE email = ?", [email], async (err, results) => {[m
+[32m+[m[32m    if (err) return res.status(500).json({ error: "Database error" });[m
+[32m+[m[32m    if (!results.length) return res.status(400).json({ error: "Invalid credentials" });[m
+[32m+[m
+[32m+[m[32m    const employer = results[0];[m
+[32m+[m[32m    const match = await bcrypt.compare(password, employer.password);[m
+[32m+[m[32m    if (!match) return res.status(400).json({ error: "Invalid credentials" });[m
+[32m+[m
+[32m+[m[32m    res.json({ id: employer.id, username: employer.username, email: employer.email, role: "employer" });[m
+[32m+[m[32m  });[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32m// ----------------------------[m
+[32m+[m[32m// FORGOT PASSWORD[m
+[32m+[m[32m// ----------------------------[m
+[32m+[m[32mexports.forgotPasswordStudent = (req, res) => handleForgotPassword(req, res, "students", "student");[m
+[32m+[m[32mexports.forgotPasswordEmployer = (req, res) => handleForgotPassword(req, res, "employers", "employer");[m
+[32m+[m
+[32m+[m[32mconst handleForgotPassword = (req, res, table, role) => {[m
+[32m+[m[32m  const { email } = req.body;[m
+[32m+[m[32m  if (!email) return res.status(400).json({ error: "Email is required" });[m
+[32m+[m
+[32m+[m[32m  db.query(`SELECT * FROM ${table} WHERE email = ?`, [email], (err, results) => {[m
+[32m+[m[32m    if (err) return res.status(500).json({ error: "Database error" });[m
+[32m+[m[32m    if (!results.length) return res.json({ message: "If this email exists, a reset link has been sent." });[m
+[32m+[m
+[32m+[m[32m    const user = results[0];[m
+[32m+[m[32m    const token = crypto.randomBytes(32).toString("hex");[m
+[32m+[m[32m    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY);[m
+[32m+[m
+[32m+[m[32m    db.query("DELETE FROM password_resets WHERE email = ?", [email], (delErr) => {[m
+[32m+[m[32m      if (delErr) return res.status(500).json({ error: "Failed to reset token" });[m
+[32m+[m
+[32m+[m[32m      const insertSql = `INSERT INTO password_resets (user_id, email, role, token, expires_at) VALUES (?, ?, ?, ?, ?)`;[m
+[32m+[m[32m      db.query(insertSql, [user.id, email, role, token, expiresAt], (saveErr) => {[m
+[32m+[m[32m        if (saveErr) return res.status(500).json({ error: "Token save failed" });[m
+[32m+[m
+[32m+[m[32m        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;[m
+[32m+[m[32m        const mailOptions = {[m
+[32m+[m[32m          from: process.env.GMAIL_USER,[m
+[32m+[m[32m          to: email,[m
+[32m+[m[32m          subject: "Password Reset",[m
+[32m+[m[32m          html: `<p>Click <a href="${resetLink}">here</a> to reset your password. Link expires in 1 hour.</p>`,[m
+[32m+[m[32m        };[m
+[32m+[m
+[32m+[m[32m        transporter.sendMail(mailOptions, (error) => {[m
+[32m+[m[32m          if (error) return res.status(500).json({ error: "Failed to send email" });[m
+[32m+[m[32m          return res.json({ message: "If this email exists, a reset link has been sent." });[m
+[32m+[m[32m        });[m
+[32m+[m[32m      });[m
+[32m+[m[32m    });[m
+[32m+[m[32m  });[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32m// ----------------------------[m
+[32m+[m[32m// RESET PASSWORD[m
+[32m+[m[32m// ----------------------------[m
+[32m+[m[32mexports.resetPassword = (req, res) => {[m
+[32m+[m[32m  const { email, token, newPassword } = req.body;[m
+[32m+[m[32m  if (!email || !token || !newPassword) return res.status(400).json({ error: "Missing required fields" });[m
+[32m+[m
+[32m+[m[32m  db.query("SELECT * FROM password_resets WHERE email = ? AND token = ?", [email, token], async (err, results) => {[m
+[32m+[m[32m    if (err) return res.status(500).json({ error: "Database error" });[m
+[32m+[m[32m    if (!results.length) return res.status(400).json({ error: "Invalid or expired token" });[m
+[32m+[m
+[32m+[m[32m    const resetRecord = results[0];[m
+[32m+[m[32m    if (new Date(resetRecord.expires_at) < new Date()) return res.status(400).json({ error: "Token expired" });[m
+[32m+[m
+[32m+[m[32m    const hashedPassword = await bcrypt.hash(newPassword, 10);[m
+[32m+[m[32m    const table = resetRecord.role === "student" ? "students" : "employers";[m
+[32m+[m
+[32m+[m[32m    db.query(`UPDATE ${table} SET password = ? WHERE id = ?`, [hashedPassword, resetRecord.user_id], (updateErr) => {[m
+[32m+[m[32m      if (updateErr) return res.status(500).json({ error: "Password update failed" });[m
+[32m+[m
+[32m+[m[32m      db.query("DELETE FROM password_resets WHERE email = ?", [email]);[m
+[32m+[m[32m      return res.json({ message: "Password has been reset successfully." });[m
+[32m+[m[32m    });[m
+[32m+[m[32m  });[m
+[32m+[m[32m};[m
+[1mdiff --git a/backend/docker-compose.yml b/backend/docker-compose.yml[m
+[1mnew file mode 100644[m
+[1mindex 0000000..32da58b[m
+[1m--- /dev/null[m
+[1m+++ b/backend/docker-compose.yml[m
+[36m@@ -0,0 +1,18 @@[m
+[32m+[m[32mversion: '3'[m
+[32m+[m[32mservices:[m
+[32m+[m[32m  backend:[m
+[32m+[m[32m    build: ./backend[m
+[32m+[m[32m    ports:[m
+[32m+[m[32m      - "5000:5000"[m
+[32m+[m[32m    depends_on:[m
+[32m+[m[32m      - db[m
+[32m+[m[32m    env_file:[m
+[32m+[m[32m      - ./backend/.env[m
+[32m+[m
+[32m+[m[32m  db:[m
+[32m+[m[32m    image: mysql:8[m
+[32m+[m[32m    environment:[m
+[32m+[m[32m      MYSQL_ROOT_PASSWORD: root[m
+[32m+[m[32m      MYSQL_DATABASE: student_portal[m
+[32m+[m[32m    ports:[m
+[32m+[m[32m      - "3306:3306"[m
+[1mdiff --git a/backend/models/userModel.js b/backend/models/userModel.js[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e69de29[m
+[1mdiff --git a/backend/node_modules/.bin/mime b/backend/node_modules/.bin/mime[m
+[1mnew file mode 100644[m
+[1mindex 0000000..7751de3[m
+[1m--- /dev/null[m
+[1m+++ b/backend/node_modules/.bin/mime[m
+[36m@@ -0,0 +1,16 @@[m
+[32m+[m[32m#!/bin/sh[m
+[32m+[m[32mbasedir=$(dirname "$(echo "$0" | sed -e 's,\\,/,g')")[m
+[32m+[m
+[32m+[m[32mcase `uname` in[m
+[32m+[m[32m    *CYGWIN*|*MINGW*|*MSYS*)[m
+[32m+[m[32m        if command -v cygpath > /dev/null 2>&1; then[m
+[32m+[m[32m            basedir=`cygpath -w "$basedir"`[m
+[32m+[m[32m        fi[m
+[32m+[m[32m    ;;[m
+[32m+[m[32mesac[m
+[32m+[m
+[32m+[m[32mif [ -x "$basedir/node" ]; then[m
+[32m+[m[32m  exec "$basedir/node"  "$basedir/../mime/cli.js" "$@"[m
+[32m+[m[32melse[m[41m [m
+[32m+[m[32m  exec node  "$basedir/../mime/cli.js" "$@"[m
+[32m+[m[32mfi[m
+[1mdiff --git a/backend/node_modules/.bin/mime.cmd b/backend/node_modules/.bin/mime.cmd[m
+[1mnew file mode 100644[m
+[1mindex 0000000..54491f1[m
+[1m--- /dev/null[m
+[1m+++ b/backend/node_modules/.bin/mime.cmd[m
+[36m@@ -0,0 +1,17 @@[m
+[32m+[m[32m@ECHO off[m
+[32m+[m[32mGOTO start[m
+[32m+[m[32m:find_dp0[m
+[32m+[m[32mSET dp0=%~dp0[m
+[32m+[m[32mEXIT /b[m
+[32m+[m[32m:start[m
+[32m+[m[32mSETLOCAL[m
+[32m+[m[32mCALL :find_dp0[m
+[32m+[m
+[32m+[m[32mIF EXIST "%dp0%\node.exe" ([m
+[32m+[m[32m  SET "_prog=%dp0%\node.exe"[m
+[32m+[m[32m) ELSE ([m
+[32m+[m[32m  SET "_prog=node"[m
+[32m+[m[32m  SET PATHEXT=%PATHEXT:;.JS;=;%[m
+[32m+[m[32m)[m
+[32m+[m
+[32m+[m[32mendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & "%_prog%"  "%dp0%\..\mime\cli.js" %*[m
+[1mdiff --git a/backend/node_modules/.bin/mime.ps1 b/backend/node_modules/.bin/mime.ps1[m
+[1mnew file mode 100644[m
+[1mindex 0000000..2222f40[m
+[1m--- /dev/null[m
+[1m+++ b/backend/node_modules/.bin/mime.ps1[m
+[36m@@ -0,0 +1,28 @@[m
+[32m+[m[32m#!/usr/bin/env pwsh[m
+[32m+[m[32m$basedir=Split-Path $MyInvocation.MyCommand.Definition -Parent[m
+[32m+[m
+[32m+[m[32m$exe=""[m
+[32m+[m[32mif ($PSVersionTable.PSVersion -lt "6.0" -or $IsWindows) {[m
+[32m+[m[32m  # Fix case when both the Windows and Linux builds of Node[m
+[32m+[m[32m  # are installed in the same directory[m
+[32m+[m[32m  $exe=".exe"[m
+[32m+[m[32m}[m
+[32m+[m[32m$ret=0[m
+[32m+[m[32mif (Test-Path "$basedir/node$exe") {[m
+[32m+[m[32m  # Support pipeline input[m
+[32m+[m[32m  if ($MyInvocation.ExpectingInput) {[m
+[32m+[m[32m    $input | & "$basedir/node$exe"  "$basedir/../mime/cli.js" $args[m
+[32m+[m[32m  } else {[m
+[32m+[m[32m    & "$basedir/node$exe"  "$basedir/../mime/cli.js" $args[m
+[32m+[m[32m  }[m
+[32m+[m[32m  $ret=$LASTEXITCODE[m
+[32m+[m[32m} else {[m
+[32m+[m[32m  # Support pipeline input[m
+[32m+[m[32m  if ($MyInvocation.ExpectingInput) {[m
+[32m+[m[32m    $input | & "node$exe"  "$basedir/../mime/cli.js" $args[m
+[32m+[m[32m  } else {[m
+[32m+[m[32m    & "node$exe"  "$basedir/../mime/cli.js" $args[m
+[32m+[m[32m  }[m
+[32m+[m[32m  $ret=$LASTEXITCODE[m
+[32m+[m[32m}[m
+[32m+[m[32mexit $ret[m
+[1mdiff --git a/backend/node_modules/.bin/mkdirp b/backend/node_modules/.bin/mkdirp[m
+[1mnew file mode 100644[m
+[1mindex 0000000..1ab9c81[m
+[1m--- /dev/null[m
+[1m+++ b/backend/node_modules/.bin/mkdirp[m
+[36m@@ -0,0 +1,16 @@[m
+[32m+[m[32m#!/bin/sh[m
+[32m+[m[32mbasedir=$(dirname "$(echo "$0" | sed -e 's,\\,/,g')")[m
+[32m+[m
+[32m+[m[32mcase `uname` in[m
+[32m+[m[32m    *CYGWIN*|*MINGW*|*MSYS*)[m
+[32m+[m[32m        if command -v cygpath > /dev/null 2>&1; then[m
+[32m+[m[32m            basedir=`cygpath -w "$basedir"`[m
+[32m+[m[32m        fi[m
+[32m+[m[32m    ;;[m
+[32m+[m[32mesac[m
+[32m+[m
+[32m+[m[32mif [ -x "$basedir/node" ]; then[m
+[32m+[m[32m  exec "$basedir/node"  "$basedir/../mkdirp/bin/cmd.js" "$@"[m
+[32m+[m[32melse[m[41m [m
+[32m+[m[32m  exec node  "$basedir/../mkdirp/bin/cmd.js" "$@"[m
+[32m+[m[32mfi[m
+[1mdiff --git a/backend/node_modules/.bin/mkdirp.cmd b/backend/node_modules/.bin/mkdirp.cmd[m
+[1mnew file mode 100644[m
+[1mindex 0000000..a865dd9[m
+[1m--- /dev/null[m
+[1m+++ b/backend/node_modules/.bin/mkdirp.cmd[m
+[36m@@ -0,0 +1,17 @@[m
+[32m+[m[32m@ECHO off[m
+[32m+[m[32mGOTO start[m
+[32m+[m[32m:find_dp0[m
+[32m+[m[32mSET dp0=%~dp0[m
+[32m+[m[32mEXIT /b[m
+[32m+[m[32m:start[m
+[32m+[m[32mSETLOCAL[m
+[32m+[m[32mCALL :find_dp0[m
+[32m+[m
+[32m+[m[32mIF EXIST "%dp0%\node.exe" ([m
+[32m+[m[32m  SET "_prog=%dp0%\node.exe"[m
+[32m+[m[32m) ELSE ([m
+[32m+[m[32m  SET "_prog=node"[m
+[32m+[m[32m  SET PATHEXT=%PATHEXT:;.JS;=;%[m
+[32m+[m[32m)[m
+[32m+[m
+[32m+[m[32mendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & "%_prog%"  "%dp0%\..\mkdirp\bin\cmd.js" %*[m
+[1mdiff --git a/backend/node_modules/.bin/mkdirp.ps1 b/backend/node_modules/.bin/mkdirp.ps1[m
+[1mnew file mode 100644[m
+[1mindex 0000000..911e854[m
+[1m--- /dev/null[m
+[1m+++ b/backend/node_modules/.bin/mkdirp.ps1[m
+[36m@@ -0,0 +1,28 @@[m
+[32m+[m[32m#!/usr/bin/env pwsh[m
+[32m+[m[32m$basedir=Split-Path $MyInvocation.MyCommand.Definition -Parent[m
+[32m+[m
+[32m+[m[32m$exe=""[m
+[32m+[m[32mif ($PSVersionTable.PSVersion -lt "6.0" -or $IsWindows) {[m
+[32m+[m[32m  # Fix case when both the Windows and Linux builds of Node[m
+[32m+[m[32m  # are installed in the same directory[m
+[32m+[m[32m  $exe=".exe"[m
+[32m+[m[32m}[m
+[32m+[m[32m$ret=0[m
+[32m+[m[32mif (Test-Path "$basedir/node$exe") {[m
+[32m+[m[32m  # Support pipeline input[m
+[32m+[m[32m  if ($MyInvocation.ExpectingInput) {[m
+[32m+[m[32m    $input | & "$basedir/node$exe"  "$basedir/../mkdirp/bin/cmd.js" $args[m
+[32m+[m[32m  } else {[m
+[32m+[m[32m    & "$basedir/node$exe"  "$basedir/../mkdirp/bin/cmd.js" $args[m
+[32m+[m[32m  }[m
+[32m+[m[32m  $ret=$LASTEXITCODE[m
+[32m+[m[32m} else {[m
+[32m+[m[32m
