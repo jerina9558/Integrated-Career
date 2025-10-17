@@ -1,0 +1,78 @@
+<!-- resume.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Builder</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("resume-form");
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        // Collect values
+        const name = document.getElementById("name").value;
+        const email = document.getElementById("email").value;
+        const phone = document.getElementById("phone").value;
+        const summary = document.getElementById("summary").value;
+        const skills = document.getElementById("skills").value;
+        const education = document.getElementById("education").value;
+        const experience = document.getElementById("experience").value;
+
+        // Fill preview section
+        document.getElementById("r-name").textContent = name;
+        document.getElementById("r-email").textContent = email;
+        document.getElementById("r-phone").textContent = phone;
+        document.getElementById("r-summary").textContent = summary;
+        document.getElementById("r-skills").textContent = skills;
+        document.getElementById("r-education").textContent = education;
+        document.getElementById("r-experience").textContent = experience;
+
+        // Show generated resume
+        document.getElementById("generated-resume").style.display = "block";
+      });
+    });
+  </script>
+</head>
+<body class="dashboard-body">
+  <div class="sidebar">
+    <h3>Student Portal</h3>
+    <ul>
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="jobs.html">Jobs & Internships</a></li>
+      <li><a href="resume.html">Resume Builder</a></li>
+      <li><a href="tracking.html">Application Tracker</a></li>
+      <li><a href="skills.html">Skill Assessment</a></li>
+      <li><a href="career.html">Career Path</a></li>
+    </ul>
+  </div>
+
+  <div class="main-content">
+    <h2>Build Your Resume</h2>
+    <form id="resume-form">
+      <input type="text" placeholder="Full Name" id="name" required />
+      <input type="email" placeholder="Email" id="email" required />
+      <input type="text" placeholder="Phone Number" id="phone" required />
+      <textarea id="summary" placeholder="Professional Summary" rows="4" required></textarea>
+      <input type="text" placeholder="Skills (comma separated)" id="skills" required />
+      <textarea id="education" placeholder="Education Details" rows="3" required></textarea>
+      <textarea id="experience" placeholder="Experience Details" rows="3"></textarea>
+      <button type="submit">Generate Resume</button>
+    </form>
+
+    <div id="generated-resume" style="display: none; margin-top: 2rem;">
+      <h2>Generated Resume</h2>
+      <div class="card">
+        <h3 id="r-name"></h3>
+        <p><strong>Email:</strong> <span id="r-email"></span></p>
+        <p><strong>Phone:</strong> <span id="r-phone"></span></p>
+        <p><strong>Summary:</strong> <span id="r-summary"></span></p>
+        <p><strong>Skills:</strong> <span id="r-skills"></span></p>
+        <p><strong>Education:</strong></p><p id="r-education"></p>
+        <p><strong>Experience:</strong></p><p id="r-experience"></p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
