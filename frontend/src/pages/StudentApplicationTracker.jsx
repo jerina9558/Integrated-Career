@@ -17,12 +17,24 @@ export default function StudentApplicationTracker() {
   const [now, setNow] = useState(new Date());
   const [selectedResult, setSelectedResult] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
   const token = localStorage.getItem("token");
-  const theme = localStorage.getItem("theme") || "light";
-  const darkMode = theme === "dark";
+  const isDark = theme === "dark";
 
-  // 🔹 Fetch applications (with evaluations)
+  // Load manually completed internships from localStorage
+  const [completedIds, setCompletedIds] = useState(
+    JSON.parse(localStorage.getItem("completedIds") || "[]")
+  );
+
+  useEffect(() => {
+    const updateTheme = () => {
+      setTheme(localStorage.getItem("theme") || "light");
+    };
+    window.addEventListener("themeChange", updateTheme);
+    return () => window.removeEventListener("themeChange", updateTheme);
+  }, []);
+
   useEffect(() => {
     const fetchApplications = async () => {
       try {
@@ -31,7 +43,6 @@ export default function StudentApplicationTracker() {
         });
         const data = res.data || [];
 
-        // Format evaluations for chart display
         const formatted = data.map((app) => {
           if (
             app.communication != null &&
@@ -48,6 +59,8 @@ export default function StudentApplicationTracker() {
               { category: "Punctuality", score: app.punctuality },
             ];
           }
+          // Set isManuallyCompleted from localStorage
+          app.isManuallyCompleted = completedIds.includes(app.id);
           return app;
         });
 
@@ -60,15 +73,13 @@ export default function StudentApplicationTracker() {
       }
     };
     fetchApplications();
-  }, [token]);
+  }, [token, completedIds]);
 
-  // 🔹 Update current time every minute
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // 🔹 Compute start and end dates based on duration
   const computeDates = (app) => {
     const applied = new Date(app.applied_at);
     const durStr = (app.jobDuration || "").toLowerCase();
@@ -81,36 +92,34 @@ export default function StudentApplicationTracker() {
     if (durStr.includes("hour")) {
       endDate.setHours(endDate.getHours() + num);
     } else if (durStr.includes("day")) {
-      startDate.setDate(startDate.getDate() + 1);
-      endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + (num - 1));
     } else if (durStr.includes("month")) {
-      startDate.setDate(startDate.getDate() + 1);
-      endDate = new Date(startDate);
       endDate.setMonth(endDate.getMonth() + num);
       endDate.setDate(endDate.getDate() - 1);
     } else {
-      startDate.setDate(startDate.getDate() + 1);
-      endDate = new Date(startDate);
       endDate.setMonth(endDate.getMonth() + 1);
       endDate.setDate(endDate.getDate() - 1);
     }
 
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
     return { ...app, startDate, endDate };
   };
 
-  // 🔹 Categorize internships based on current date
   const withDates = applications.map(computeDates);
-  const ongoing = withDates.filter((a) => now >= a.startDate && now <= a.endDate);
-  const upcoming = withDates.filter((a) => a.startDate > now);
-  const completed = withDates.filter((a) => a.endDate < now);
+
+  const ongoing = withDates.filter(
+    (a) => now >= a.startDate && now <= a.endDate && !a.isManuallyCompleted
+  );
+  const completed = withDates.filter(
+    (a) => a.endDate < now || a.isManuallyCompleted
+  );
 
   let list = [];
   if (filter === "Ongoing") list = ongoing;
-  if (filter === "Upcoming") list = upcoming;
   if (filter === "Completed") list = completed;
 
-  // 🔹 Handle project upload
   const handleUpload = async (e, appId) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -139,32 +148,75 @@ export default function StudentApplicationTracker() {
     }
   };
 
-  // 🔹 Statistic card
+  const handleMarkAsCompleted = (appId) => {
+    const newCompleted = [...completedIds, appId];
+    setCompletedIds(newCompleted);
+    localStorage.setItem("completedIds", JSON.stringify(newCompleted));
+
+    setApplications((prev) =>
+      prev.map((a) =>
+        a.id === appId ? { ...a, isManuallyCompleted: true } : a
+      )
+    );
+    setSelectedResult(null);
+    alert("✅ Internship marked as completed!");
+  };
+
   const statCard = (label, count, color, icon) => (
     <div
       style={{
         flex: 1,
-        backgroundColor: darkMode ? "#1E1E1E" : "#fff",
-        borderRadius: "10px",
-        padding: "1.2rem",
-        boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
-        borderLeft: `4px solid ${color}`,
+        backgroundColor: isDark ? "#2d3748" : "#ffffff",
+        borderRadius: "12px",
+        padding: "24px",
+        boxShadow: isDark
+          ? "0 10px 30px rgba(0, 0, 0, 0.4)"
+          : "0 6px 20px rgba(0, 0, 0, 0.08)",
+        border: `1px solid ${isDark ? "#4a5568" : "#e5e7eb"}`,
         display: "flex",
         flexDirection: "column",
         alignItems: "flex-start",
         justifyContent: "center",
         minWidth: "180px",
+        transition: "all 0.3s ease",
       }}
     >
-      <h4 style={{ fontSize: "0.95rem", color: "#555", marginBottom: "0.4rem" }}>{label}</h4>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <h2 style={{ fontSize: "1.8rem", fontWeight: "bold", color: color }}>{count}</h2>
-        <div style={{ backgroundColor: `${color}20`, padding: "6px", borderRadius: "8px" }}>{icon}</div>
+      <h4
+        style={{
+          fontSize: "0.875rem",
+          color: isDark ? "#a0aec0" : "#6b7280",
+          marginBottom: "8px",
+          fontWeight: "500",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+        }}
+      >
+        {label}
+      </h4>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <h2
+          style={{
+            fontSize: "2.5rem",
+            fontWeight: "700",
+            color: color,
+          }}
+        >
+          {count}
+        </h2>
+        <div
+          style={{
+            backgroundColor: `${color}20`,
+            padding: "10px",
+            borderRadius: "10px",
+            fontSize: "1.5rem",
+          }}
+        >
+          {icon}
+        </div>
       </div>
     </div>
   );
 
-  // 🔹 Compute grade text based on average score
   const getGrade = (avg) => {
     if (avg >= 85) return { text: "Excellent 🌟", color: "#16a34a" };
     if (avg >= 70) return { text: "Good 👍", color: "#3b82f6" };
@@ -177,119 +229,216 @@ export default function StudentApplicationTracker() {
   return (
     <div
       style={{
-        padding: "40px",
-        backgroundColor: darkMode ? "#121212" : "#f5f6fa",
+        fontFamily: "'Inter', 'Segoe UI', Arial, sans-serif",
+        marginLeft: "50px",
+        padding: "60px 180px",
+        backgroundColor: isDark ? "#1a202c" : "#ffffff",
+        color: isDark ? "#ffffff" : "#111827",
         minHeight: "100vh",
-        fontFamily: "Inter, sans-serif",
       }}
     >
-      <h2 style={{ fontSize: "1.8rem", fontWeight: "700", marginBottom: "5px" }}>My Internships</h2>
-      <p style={{ color: "#777", marginBottom: "20px" }}>Track and manage your internship applications</p>
+      {/* Hero Section */}
+      <div
+        style={{
+          background: isDark
+            ? "linear-gradient(135deg, #2d3748 0%, #1a202c 100%)"
+            : "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)",
+          padding: "10px 200px",
+          borderRadius: "16px",
+          marginBottom: "48px",
+          border: `1px solid ${isDark ? "#4a5568" : "#c7d2fe"}`,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <h2
+          style={{
+            fontSize: "2.5rem",
+            fontWeight: "750",
+            marginBottom: "10px",
+            background: isDark
+              ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+              : "linear-gradient(135deg, #3f51b5 0%, #5a67d8 100%)",
+           
+              WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+             whiteSpace: "nowrap", 
+          }}
+        >
+          My Internships
+        </h2>
+        <p
+          style={{
+            fontSize: "1.1rem",
+            color: isDark ? "#a0aec0" : "#6b7280",
+            maxWidth: "600px",
+          }}
+        >
+          Track and manage your internship applications
+        </p>
+      </div>
 
-      <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "30px" }}>
+      {/* Stats */}
+      <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "40px" }}>
         {statCard("Ongoing", ongoing.length, "#22c55e", "📈")}
-        {statCard("Upcoming", upcoming.length, "#3b82f6", "⏰")}
         {statCard("Completed", completed.length, "#64748b", "✅")}
       </div>
 
+      {/* Filter */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          backgroundColor: darkMode ? "#1E1E1E" : "#fff",
-          padding: "10px 20px",
-          borderRadius: "10px",
-          boxShadow: "0 2px 5px rgba(0,0,0,0.08)",
-          marginBottom: "20px",
+          backgroundColor: isDark ? "#2d3748" : "#ffffff",
+          padding: "20px 24px",
+          borderRadius: "12px",
+          border: `1px solid ${isDark ? "#4a5568" : "#e5e7eb"}`,
+          marginBottom: "32px",
         }}
       >
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           style={{
-            padding: "0.5rem 1rem",
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-            background: darkMode ? "#222" : "#fff",
-            color: darkMode ? "#fff" : "#000",
-            fontWeight: "500",
+            padding: "12px 20px",
+            border: `2px solid ${isDark ? "#4a5568" : "#d1d5db"}`,
+            borderRadius: "8px",
+            backgroundColor: isDark ? "#1a202c" : "#ffffff",
+            color: isDark ? "#ffffff" : "#111827",
+            fontWeight: "600",
           }}
         >
           <option value="Ongoing">Ongoing</option>
-          <option value="Upcoming">Upcoming</option>
           <option value="Completed">Completed</option>
         </select>
       </div>
 
+      {/* Applications */}
       {list.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 0", color: "#888", fontSize: "1rem" }}>
-          <div style={{ fontSize: "2rem" }}>⚠️</div>
-          No {filter.toLowerCase()} internships found
-        </div>
-      ) : (
-        list.map((app) => (
-          <div
-            key={app.id}
+        <div
+          style={{
+            textAlign: "center",
+            padding: "80px 20px",
+            backgroundColor: isDark ? "#2d3748" : "#f9fafb",
+            borderRadius: "16px",
+            border: `2px dashed ${isDark ? "#4a5568" : "#d1d5db"}`,
+          }}
+        >
+          <div style={{ fontSize: "4rem", marginBottom: "16px", opacity: 0.5 }}>⚠️</div>
+          <p
             style={{
-              backgroundColor: darkMode ? "#1E1E1E" : "#fff",
-              borderRadius: "12px",
-              padding: "1.5rem",
-              marginBottom: "20px",
-              boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+              fontSize: "1.3rem",
+              fontWeight: "600",
+              color: isDark ? "#e2e8f0" : "#374151",
             }}
           >
-            <h3 style={{ fontSize: "1.25rem", fontWeight: "600", marginBottom: "10px" }}>{app.jobTitle}</h3>
-            <p style={{ color: "#666", marginBottom: "10px" }}>Duration: {app.jobDuration || "N/A"}</p>
-            <p><strong>Employer:</strong> {app.employerName || "—"}</p>
-            <p><strong>Start:</strong> {app.startDate.toLocaleDateString()}</p>
-            <p><strong>End:</strong> {app.endDate.toLocaleDateString()}</p>
+            No {filter.toLowerCase()} internships found
+          </p>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))",
+            gap: "28px",
+          }}
+        >
+          {list.map((app) => (
+            <div
+              key={app.id}
+              style={{
+                backgroundColor: isDark ? "#2d3748" : "white",
+                color: isDark ? "#ffffff" : "#111827",
+                padding: "32px",
+                borderRadius: "16px",
+                boxShadow: isDark
+                  ? "0 10px 30px rgba(0, 0, 0, 0.4)"
+                  : "0 6px 20px rgba(0, 0, 0, 0.08)",
+                border: `1px solid ${isDark ? "#4a5568" : "#e5e7eb"}`,
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: "700",
+                  marginBottom: "16px",
+                  color: isDark ? "#90cdf4" : "#3f51b5",
+                }}
+              >
+                {app.jobTitle}
+              </h3>
 
-            <div style={{ marginTop: "15px", display: "flex", gap: "10px" }}>
-              {/* Upload Project (only ongoing) */}
-              {filter === "Ongoing" && (
-                <label
-                  style={{
-                    padding: "8px 16px",
-                    backgroundColor: "#e5e7eb",
-                    color: "#111",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                  }}
-                >
-                  {uploading ? "Uploading..." : "Upload Project"}
-                  <input
-                    type="file"
-                    name="projectZip"
-                    accept=".zip"
-                    style={{ display: "none" }}
-                    onChange={(e) => handleUpload(e, app.id)}
-                  />
-                </label>
-              )}
+              <div
+                style={{
+                  backgroundColor: isDark ? "#4a5568" : "#f3f4f6",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  marginBottom: "16px",
+                  fontSize: "0.95rem",
+                  color: isDark ? "#e2e8f0" : "#4b5563",
+                }}
+              >
+                ⏱️ Duration: {app.jobDuration || "N/A"}
+              </div>
 
-              {/* View Result (only if evaluation exists) */}
-              {app.resultData && app.resultData.length > 0 && (
-                <button
-                  onClick={() => setSelectedResult(app)}
-                  style={{
-                    padding: "8px 16px",
-                    backgroundColor: "#16a34a",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                  }}
-                >
-                  View Result
-                </button>
-              )}
+              <div style={{ marginBottom: "12px", fontSize: "1rem", lineHeight: "1.8" }}>
+                <p>
+                  <strong>Employer:</strong> {app.employerName || "—"}
+                </p>
+                <p>
+                  <strong>Start:</strong> {app.startDate.toLocaleDateString()}
+                </p>
+                <p>
+                  <strong>End:</strong> {app.endDate.toLocaleDateString()}
+                </p>
+              </div>
+
+              <div style={{ marginTop: "20px", display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                {filter === "Ongoing" && (
+                  <label
+                    style={{
+                      padding: "12px 20px",
+                      backgroundColor: isDark ? "#4a5568" : "#e5e7eb",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {uploading ? "Uploading..." : "📤 Upload Project"}
+                    <input
+                      type="file"
+                      name="projectZip"
+                      accept=".zip"
+                      style={{ display: "none" }}
+                      onChange={(e) => handleUpload(e, app.id)}
+                    />
+                  </label>
+                )}
+
+                {app.resultData && (
+                  <button
+                    onClick={() => setSelectedResult(app)}
+                    style={{
+                      padding: "12px 20px",
+                      backgroundColor: "#16a34a",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                    }}
+                  >
+                    📊 View Result
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
 
-      {/* Result Modal with Line Chart */}
+      {/* Result Modal */}
       {selectedResult && selectedResult.resultData && (
         <div
           style={{
@@ -298,7 +447,7 @@ export default function StudentApplicationTracker() {
             left: 0,
             width: "100vw",
             height: "100vh",
-            backgroundColor: "rgba(0,0,0,0.5)",
+            backgroundColor: "rgba(0,0,0,0.6)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -309,23 +458,28 @@ export default function StudentApplicationTracker() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: "550px",
-              backgroundColor: "#fff",
-              borderRadius: "10px",
-              padding: "25px",
-              boxShadow: "0 5px 20px rgba(0,0,0,0.3)",
+              width: "90%",
+              maxWidth: "600px",
+              backgroundColor: isDark ? "#2d3748" : "#ffffff",
+              color: isDark ? "#ffffff" : "#111827",
+              borderRadius: "16px",
+              padding: "32px",
             }}
           >
-            <h3 style={{ fontSize: "1.5rem", fontWeight: "600", marginBottom: "15px" }}>
+            <h3
+              style={{
+                fontSize: "1.75rem",
+                fontWeight: "700",
+                marginBottom: "24px",
+                color: isDark ? "#90cdf4" : "#3f51b5",
+              }}
+            >
               {selectedResult.jobTitle} - Result Overview
             </h3>
 
-            <div style={{ width: "100%", height: 250 }}>
+            <div style={{ width: "100%", height: 280, marginBottom: "20px" }}>
               <ResponsiveContainer>
-                <LineChart
-                  data={selectedResult.resultData}
-                  margin={{ top: 10, right: 20, bottom: 10, left: 0 }}
-                >
+                <LineChart data={selectedResult.resultData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="category" />
                   <YAxis domain={[0, 100]} />
@@ -335,7 +489,6 @@ export default function StudentApplicationTracker() {
               </ResponsiveContainer>
             </div>
 
-            {/* Compute average and grade */}
             {(() => {
               const avg =
                 selectedResult.resultData.reduce((sum, d) => sum + d.score, 0) /
@@ -345,10 +498,13 @@ export default function StudentApplicationTracker() {
                 <p
                   style={{
                     textAlign: "center",
-                    fontWeight: "bold",
+                    fontWeight: "700",
                     color: grade.color,
                     marginTop: "10px",
-                    fontSize: "1.1rem",
+                    fontSize: "1.3rem",
+                    padding: "16px",
+                    backgroundColor: `${grade.color}15`,
+                    borderRadius: "8px",
                   }}
                 >
                   {grade.text} (Avg: {avg.toFixed(1)}%)
@@ -356,20 +512,39 @@ export default function StudentApplicationTracker() {
               );
             })()}
 
-            <div style={{ textAlign: "right", marginTop: "20px" }}>
+            <div style={{ textAlign: "right", marginTop: "24px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
               <button
                 onClick={() => setSelectedResult(null)}
                 style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#ef4444",
+                  backgroundColor: "#e11d48",
                   color: "#fff",
                   border: "none",
-                  borderRadius: "6px",
+                  borderRadius: "8px",
+                  padding: "10px 18px",
+                  fontWeight: "600",
                   cursor: "pointer",
                 }}
               >
-                Close
+                ✖ Close
               </button>
+
+              {/* Show "Mark as Completed" only if not completed */}
+              {!selectedResult.isManuallyCompleted && filter === "Ongoing" && (
+                <button
+                  onClick={() => handleMarkAsCompleted(selectedResult.id)}
+                  style={{
+                    backgroundColor: "#16a34a",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "10px 18px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                  }}
+                >
+                  ✅ Mark as Completed
+                </button>
+              )}
             </div>
           </div>
         </div>

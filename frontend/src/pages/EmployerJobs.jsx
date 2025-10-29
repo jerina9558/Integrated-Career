@@ -13,11 +13,9 @@ export default function EmployerJobs() {
 
   const token = localStorage.getItem("token");
 
-  // ✅ theme state
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-  const darkMode = theme === "dark";
+  const isDark = theme === "dark";
 
-  // ✅ listen for theme changes
   useEffect(() => {
     const updateTheme = () => {
       setTheme(localStorage.getItem("theme") || "light");
@@ -96,193 +94,477 @@ export default function EmployerJobs() {
     }
   };
 
+  // Common input style
+  const inputStyle = {
+    width: "100%",
+    padding: "12px 260px",
+    fontSize: "1rem",
+    borderRadius: "8px",
+    border: `2px solid ${isDark ? "#4a5568" : "#d1d5db"}`,
+    backgroundColor: isDark ? "#1a202c" : "#ffffff",
+    color: isDark ? "#ffffff" : "#111827",
+    outline: "none",
+    transition: "all 0.2s ease",
+    boxSizing: "border-box",
+  };
+
+  const labelStyle = {
+    display: "block",
+    marginBottom: "8px",
+    fontWeight: "600",
+    fontSize: "0.95rem",
+    color: isDark ? "#e2e8f0" : "#374151",
+  };
+
   return (
     <div
       style={{
-        fontFamily: "Arial, sans-serif",
-        maxWidth: "1200px",
-        margin: "0 auto",
-        padding: "2rem",
+        fontFamily: "'Inter', 'Segoe UI', Arial, sans-serif",
+        marginLeft: "50px",
+        padding: "40px 40px",
+        backgroundColor: isDark ? "#1a202c" : "#ffffff",
+        color: isDark ? "#ffffff" : "#111827",
         minHeight: "100vh",
-        backgroundColor: darkMode ? "#121212" : "#ffffff",
-        color: darkMode ? "#ffffff" : "#000000",
-        transition: "all 0.3s ease",
       }}
     >
-      <h2 style={{ fontSize: "1.8rem", marginBottom: "1rem" }}>
-        Post a Job/Internship
-      </h2>
-
-      {/* Post Job Form */}
-      <form
-        onSubmit={handlePost}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          width: "100%",
+      {/* Hero Section */}
+      <div style={{
+        background: isDark 
+          ? "linear-gradient(135deg, #2d3748 0%, #1a202c 100%)"
+          : "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)",
+        padding: "48px 40px",
+        borderRadius: "16px",
+        marginBottom: "48px",
+        border: `1px solid ${isDark ? "#4a5568" : "#c7d2fe"}`,
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        <div style={{
+          position: "absolute",
+          top: "-50px",
+          right: "-50px",
+          width: "200px",
+          height: "200px",
+          background: "radial-gradient(circle, rgba(63, 81, 181, 0.15) 0%, transparent 70%)",
+          borderRadius: "50%",
+        }}></div>
+        
+        <h2 style={{
+          fontSize: "2.5rem",
+          fontWeight: "700",
+          marginBottom: "12px",
+          background: isDark 
+            ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+            : "linear-gradient(135deg, #3f51b5 0%, #5a67d8 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+        }}>
+          Post a Job/Internship
+        </h2>
+        <p style={{
+          fontSize: "1.1rem",
+          color: isDark ? "#a0aec0" : "#6b7280",
           maxWidth: "600px",
-          backgroundColor: darkMode ? "#1e1e1e" : "#fff",
-          color: darkMode ? "#ffffff" : "#000000",
-          padding: "1.5rem",
-          borderRadius: "10px",
-          boxShadow: "0 8px 30px rgba(0, 0, 0, 0.1)",
-          marginBottom: "3rem",
-        }}
-      >
-        <input
-          name="title"
-          placeholder="Job Title"
-          value={newJob.title}
-          onChange={handleChange}
-          required
-          style={{
-            padding: "0.75rem",
-            marginBottom: "1rem",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            backgroundColor: darkMode ? "#2a2a2a" : "#fff",
-            color: darkMode ? "#fff" : "#000",
-          }}
-        />
+        }}>
+          Share exciting opportunities with talented students and build your team
+        </p>
+      </div>
 
-        <select
-          name="domain"
-          value={newJob.domain}
-          onChange={handleChange}
-          required
+      {/* Centered Form Container */}
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        marginBottom: "60px",
+      }}>
+        <form
+          onSubmit={handlePost}
           style={{
-            padding: "0.75rem",
-            marginBottom: "1rem",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            backgroundColor: darkMode ? "#2a2a2a" : "#fff",
-            color: darkMode ? "#fff" : "#000",
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+            maxWidth: "700px",
+            backgroundColor: isDark ? "#2d3748" : "#ffffff",
+            color: isDark ? "#ffffff" : "#111827",
+            padding: "40px",
+            borderRadius: "16px",
+            boxShadow: isDark 
+              ? "0 10px 30px rgba(0, 0, 0, 0.4)"
+              : "0 6px 20px rgba(0, 0, 0, 0.08)",
+            border: `1px solid ${isDark ? "#4a5568" : "#e5e7eb"}`,
           }}
         >
-          <option value="">Select Domain</option>
-          <option value="web">Web Development</option>
-          <option value="data">Data Science</option>
-          <option value="design">UI/UX Design</option>
-          <option value="marketing">Digital Marketing</option>
-        </select>
+          <div style={{ marginBottom: "24px" }}>
+            <label style={labelStyle}>
+              Job Title <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input
+              name="title"
 
-        <input
-          name="location"
-          placeholder="Location"
-          value={newJob.location}
-          onChange={handleChange}
-          required
-          style={{
-            padding: "0.75rem",
-            marginBottom: "1rem",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            backgroundColor: darkMode ? "#2a2a2a" : "#fff",
-            color: darkMode ? "#fff" : "#000",
-          }}
-        />
+              value={newJob.title}
+              onChange={handleChange}
+              required
+              style={inputStyle}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#3f51b5";
+                e.target.style.boxShadow = "0 0 0 3px rgba(63, 81, 181, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = isDark ? "#4a5568" : "#d1d5db";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
 
-        <input
-          name="duration"
-          placeholder="Duration"
-          value={newJob.duration}
-          onChange={handleChange}
-          required
-          style={{
-            padding: "0.75rem",
-            marginBottom: "1rem",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            backgroundColor: darkMode ? "#2a2a2a" : "#fff",
-            color: darkMode ? "#fff" : "#000",
-          }}
-        />
-
-        <textarea
-          name="description"
-          placeholder="Description"
-          value={newJob.description}
-          onChange={handleChange}
-          required
-          rows={4}
-          style={{
-            padding: "0.75rem",
-            marginBottom: "1rem",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            backgroundColor: darkMode ? "#2a2a2a" : "#fff",
-            color: darkMode ? "#fff" : "#000",
-          }}
-        />
-
-        <button
-          type="submit"
-          style={{
-            padding: "0.75rem",
-            backgroundColor: "#3f51b5",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
-          ➕ Post Job
-        </button>
-      </form>
-
-      {/* Posted Jobs */}
-      <h3 style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>
-        Your Posted Jobs
-      </h3>
-      {jobs.length === 0 ? (
-        <p>No jobs posted yet.</p>
-      ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: "1.5rem",
-          }}
-        >
-          {jobs.map((job) => (
-            <div
-              key={job.id}
+          <div style={{ marginBottom: "24px" }}>
+            <label style={labelStyle}>
+              Domain <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <select
+              name="domain"
+              value={newJob.domain}
+              onChange={handleChange}
+              required
               style={{
-                backgroundColor: darkMode ? "#1e1e1e" : "#fff",
-                color: darkMode ? "#fff" : "#000",
-                padding: "1.2rem",
-                borderRadius: "10px",
-                boxShadow: "0 8px 30px rgba(0, 0, 0, 0.1)",
-                position: "relative",
+                ...inputStyle,
+                cursor: "pointer",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#3f51b5";
+                e.target.style.boxShadow = "0 0 0 3px rgba(63, 81, 181, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = isDark ? "#4a5568" : "#d1d5db";
+                e.target.style.boxShadow = "none";
               }}
             >
-              <h3 style={{ marginBottom: "0.5rem" }}>{job.title}</h3>
-              <p style={{ margin: 0 }}>
-                <strong>Domain:</strong> {job.domain} <br />
-                <strong>Location:</strong> {job.location} <br />
-                <strong>Duration:</strong> {job.duration}
-              </p>
-              <p style={{ marginTop: "0.75rem" }}>{job.description}</p>
-              <button
-                onClick={() => handleDelete(job.id)}
+              <option value="">Select Domain</option>
+              <option value="web">Web Development</option>
+              <option value="data">Data Science</option>
+              <option value="design">UI/UX Design</option>
+              <option value="marketing">Digital Marketing</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: "24px" }}>
+            <label style={labelStyle}>
+              Location <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input
+              name="location"
+              value={newJob.location}
+              onChange={handleChange}
+              required
+              style={inputStyle}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#3f51b5";
+                e.target.style.boxShadow = "0 0 0 3px rgba(63, 81, 181, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = isDark ? "#4a5568" : "#d1d5db";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "24px" }}>
+            <label style={labelStyle}>
+              Duration <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input
+              name="duration"
+              value={newJob.duration}
+              onChange={handleChange}
+              required
+              style={inputStyle}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#3f51b5";
+                e.target.style.boxShadow = "0 0 0 3px rgba(63, 81, 181, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = isDark ? "#4a5568" : "#d1d5db";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "28px" }}>
+            <label style={labelStyle}>
+              Description <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <textarea
+              name="description"
+              value={newJob.description}
+              onChange={handleChange}
+              required
+              rows={5}
+              style={{
+                ...inputStyle,
+                resize: "vertical",
+                fontFamily: "inherit",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#3f51b5";
+                e.target.style.boxShadow = "0 0 0 3px rgba(63, 81, 181, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = isDark ? "#4a5568" : "#d1d5db";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            style={{
+              padding: "14px 140px",
+              width: "100%",
+              backgroundColor: "#3f51b5",
+              color: "white",
+              border: "none",
+              borderRadius: "10px",
+              cursor: "pointer",
+              fontWeight: "600",
+              fontSize: "1.05rem",
+              transition: "all 0.2s ease",
+              boxShadow: "0 4px 12px rgba(63, 81, 181, 0.3)",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "#303f9f";
+              e.target.style.transform = "scale(1.02)";
+              e.target.style.boxShadow = "0 6px 16px rgba(63, 81, 181, 0.4)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "#3f51b5";
+              e.target.style.transform = "scale(1)";
+              e.target.style.boxShadow = "0 4px 12px rgba(63, 81, 181, 0.3)";
+            }}
+          >
+            ➕ Post Job
+          </button>
+        </form>
+      </div>
+
+      {/* Posted Jobs Section */}
+      <div style={{ marginBottom: "32px" }}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "24px",
+          flexWrap: "wrap",
+          gap: "16px",
+        }}>
+          <h3 style={{
+            fontSize: "1.75rem",
+            fontWeight: "600",
+            color: isDark ? "#e2e8f0" : "#1f2937",
+          }}>
+            Your Posted Jobs
+          </h3>
+          <div style={{
+            backgroundColor: isDark ? "#2d3748" : "#f9fafb",
+            padding: "12px 140px",
+            borderRadius: "8px",
+            border: `1px solid ${isDark ? "#4a5568" : "#e5e7eb"}`,
+          }}>
+            <span style={{
+              fontSize: "0.85rem",
+              color: isDark ? "#a0aec0" : "#6b7280",
+              marginRight: "8px",
+            }}>
+              Total:
+            </span>
+            <span style={{
+              fontSize: "1.25rem",
+              fontWeight: "600",
+              color: isDark ? "#90cdf4" : "#3f51b5",
+            }}>
+              {jobs.length} {jobs.length === 1 ? 'Job' : 'Jobs'}
+            </span>
+          </div>
+        </div>
+
+        {jobs.length === 0 ? (
+          <div style={{
+            textAlign: "center",
+            padding: "80px 140px",
+            backgroundColor: isDark ? "#2d3748" : "#f9fafb",
+            borderRadius: "16px",
+            border: `2px dashed ${isDark ? "#4a5568" : "#d1d5db"}`,
+          }}>
+            <div style={{
+              fontSize: "4rem",
+              marginBottom: "16px",
+              opacity: 0.5,
+            }}>
+              📋
+            </div>
+            <p style={{
+              fontSize: "1.3rem",
+              fontWeight: "600",
+              color: isDark ? "#e2e8f0" : "#374151",
+              marginBottom: "8px",
+            }}>
+              No jobs posted yet
+            </p>
+            <p style={{
+              fontSize: "1rem",
+              color: isDark ? "#a0aec0" : "#6b7280",
+            }}>
+              Create your first job posting using the form above
+            </p>
+          </div>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
+              gap: "28px",
+            }}
+          >
+            {jobs.map((job) => (
+              <div
+                key={job.id}
                 style={{
-                  marginTop: "0.5rem",
-                  padding: "0.5rem 1rem",
-                  backgroundColor: "#e53935",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
+                  backgroundColor: isDark ? "#2d3748" : "white",
+                  color: isDark ? "#ffffff" : "#111827",
+                  padding: "32px",
+                  borderRadius: "16px",
+                  boxShadow: isDark 
+                    ? "0 10px 30px rgba(0, 0, 0, 0.4)"
+                    : "0 6px 20px rgba(0, 0, 0, 0.08)",
+                  border: `1px solid ${isDark ? "#4a5568" : "#e5e7eb"}`,
+                  transition: "all 0.3s ease",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-6px)";
+                  e.currentTarget.style.boxShadow = isDark
+                    ? "0 16px 40px rgba(0, 0, 0, 0.5)"
+                    : "0 12px 30px rgba(0, 0, 0, 0.12)";
+                  e.currentTarget.style.borderColor = "#3f51b5";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = isDark
+                    ? "0 10px 30px rgba(0, 0, 0, 0.4)"
+                    : "0 6px 20px rgba(0, 0, 0, 0.08)";
+                  e.currentTarget.style.borderColor = isDark ? "#4a5568" : "#e5e7eb";
                 }}
               >
-                🗑️ Delete
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+                <div style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  width: "120px",
+                  height: "120px",
+                  background: "linear-gradient(135deg, #3f51b5 0%, #5a67d8 100%)",
+                  opacity: 0.08,
+                  borderRadius: "0 0 0 100%",
+                }}></div>
+
+                <h3 style={{
+                  fontSize: "1.5rem",
+                  fontWeight: "700",
+                  marginBottom: "20px",
+                  color: isDark ? "#90cdf4" : "#3f51b5",
+                  lineHeight: "1.3",
+                }}>
+                  {job.title}
+                </h3>
+
+                <div style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                  marginBottom: "20px",
+                }}>
+                  <span style={{
+                    backgroundColor: isDark ? "#4a5568" : "#ede9fe",
+                    color: isDark ? "#c3dafe" : "#5b21b6",
+                    padding: "6px 140px",
+                    borderRadius: "20px",
+                    fontSize: "0.875rem",
+                    fontWeight: "600",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}>
+                    💼 {job.domain}
+                  </span>
+                  <span style={{
+                    backgroundColor: isDark ? "#4a5568" : "#fef3c7",
+                    color: isDark ? "#fbd38d" : "#92400e",
+                    padding: "6px 14px",
+                    borderRadius: "20px",
+                    fontSize: "0.875rem",
+                    fontWeight: "600",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}>
+                    📍 {job.location}
+                  </span>
+                  <span style={{
+                    backgroundColor: isDark ? "#4a5568" : "#dbeafe",
+                    color: isDark ? "#90cdf4" : "#1e40af",
+                    padding: "6px 14px",
+                    borderRadius: "20px",
+                    fontSize: "0.875rem",
+                    fontWeight: "600",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}>
+                    ⏱️ {job.duration}
+                  </span>
+                </div>
+
+                <p style={{
+                  fontSize: "1rem",
+                  lineHeight: "1.7",
+                  color: isDark ? "#cbd5e0" : "#4b5563",
+                  marginBottom: "24px",
+                  minHeight: "60px",
+                }}>
+                  {job.description}
+                </p>
+
+                <button
+                  onClick={() => handleDelete(job.id)}
+                  style={{
+                    padding: "12px 24px",
+                    width: "100%",
+                    backgroundColor: "#ef4444",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                    fontSize: "1rem",
+                    transition: "all 0.2s ease",
+                    boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = "#dc2626";
+                    e.target.style.transform = "scale(1.02)";
+                    e.target.style.boxShadow = "0 6px 16px rgba(239, 68, 68, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = "#ef4444";
+                    e.target.style.transform = "scale(1)";
+                    e.target.style.boxShadow = "0 4px 12px rgba(239, 68, 68, 0.3)";
+                  }}
+                >
+                  🗑️ Delete Job
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

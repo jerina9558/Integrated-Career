@@ -62,19 +62,57 @@ export default function ApplyJob({ jobId, token, onNewApplication }) {
 
       setMessage(res.data.message || "✅ Application submitted successfully!");
 
-      // Create new application object for tracker
+      // Compute start/end dates
+      const today = new Date();
+      const startDate = new Date(today);
+      startDate.setDate(today.getDate() + 1); // starts tomorrow
+
+      let endDate = new Date(startDate);
+      const durStr = (formData.duration || "1 month").toLowerCase();
+      const numMatch = durStr.match(/\d+/);
+      const num = numMatch ? parseInt(numMatch[0], 10) : 1;
+
+      if (durStr.includes("hour")) {
+        endDate.setHours(endDate.getHours() + num);
+      } else if (durStr.includes("day")) {
+        endDate.setDate(endDate.getDate() + num - 1);
+      } else if (durStr.includes("week")) {
+        endDate.setDate(endDate.getDate() + num * 7 - 1);
+      } else if (durStr.includes("month")) {
+        endDate.setMonth(endDate.getMonth() + num);
+        endDate.setDate(endDate.getDate() - 1);
+      } else {
+        // default 1 month
+        endDate.setMonth(endDate.getMonth() + 1);
+        endDate.setDate(endDate.getDate() - 1);
+      }
+
+      // Create new application object for trackers
       const newApplication = {
-        id: Date.now(), // temporary ID for local usage
+        id: Date.now(), // temporary ID
         jobId,
         jobTitle: `Internship - ${formData.domain || "N/A"}`,
         employerName: formData.name,
         jobDuration: formData.duration || "1 month",
         applied_at: new Date().toISOString(),
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        status: "Upcoming", // initial status
       };
 
-      // Save in localStorage
-      const existing = JSON.parse(localStorage.getItem("studentApplications") || "[]");
-      localStorage.setItem("studentApplications", JSON.stringify([...existing, newApplication]));
+      // Save in student tracker
+      const existingStudent = JSON.parse(localStorage.getItem("studentApplications") || "[]");
+      localStorage.setItem(
+        "studentApplications",
+        JSON.stringify([...existingStudent, newApplication])
+      );
+
+      // Save in employer tracker
+      const existingEmployer = JSON.parse(localStorage.getItem("employerApplications") || "[]");
+      localStorage.setItem(
+        "employerApplications",
+        JSON.stringify([...existingEmployer, newApplication])
+      );
 
       // Notify parent component to update tracker immediately
       if (onNewApplication) onNewApplication(newApplication);
@@ -134,80 +172,16 @@ export default function ApplyJob({ jobId, token, onNewApplication }) {
         encType="multipart/form-data"
         style={{ display: "flex", flexDirection: "column", gap: "10px" }}
       >
-        <input
-          type="text"
-          name="name"
-          placeholder="Full Name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="text"
-          name="college"
-          placeholder="College"
-          value={formData.college}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="text"
-          name="linkedin"
-          placeholder="LinkedIn URL (optional)"
-          value={formData.linkedin}
-          onChange={handleChange}
-        />
-        <input
-          type="text"
-          name="github"
-          placeholder="GitHub URL (optional)"
-          value={formData.github}
-          onChange={handleChange}
-        />
-        <input
-          type="text"
-          name="graduation_year"
-          placeholder="Graduation Year"
-          value={formData.graduation_year}
-          onChange={handleChange}
-          required
-        />
-        <textarea
-          name="skills"
-          placeholder="Skills (comma separated)"
-          value={formData.skills}
-          onChange={handleChange}
-          required
-        ></textarea>
-        <input
-          type="text"
-          name="domain"
-          placeholder="Domain (optional)"
-          value={formData.domain}
-          onChange={handleChange}
-        />
-        <input
-          type="text"
-          name="duration"
-          placeholder="Duration (e.g., 1 month)"
-          value={formData.duration}
-          onChange={handleChange}
-        />
-        <input
-          type="file"
-          name="resume"
-          accept=".pdf,.doc,.docx"
-          onChange={handleChange}
-          required
-        />
+        <input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} required />
+        <input type="text" name="college" placeholder="College" value={formData.college} onChange={handleChange} required />
+        <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
+        <input type="text" name="linkedin" placeholder="LinkedIn URL (optional)" value={formData.linkedin} onChange={handleChange} />
+        <input type="text" name="github" placeholder="GitHub URL (optional)" value={formData.github} onChange={handleChange} />
+        <input type="text" name="graduation_year" placeholder="Graduation Year" value={formData.graduation_year} onChange={handleChange} required />
+        <textarea name="skills" placeholder="Skills (comma separated)" value={formData.skills} onChange={handleChange} required />
+        <input type="text" name="domain" placeholder="Domain (optional)" value={formData.domain} onChange={handleChange} />
+        <input type="text" name="duration" placeholder="Duration (e.g., 1 month)" value={formData.duration} onChange={handleChange} />
+        <input type="file" name="resume" accept=".pdf,.doc,.docx" onChange={handleChange} required />
 
         <button
           type="submit"
