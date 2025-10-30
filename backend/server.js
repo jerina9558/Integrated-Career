@@ -177,12 +177,12 @@ tableQueries.forEach(query => {
 
 // ─────────────── Nodemailer Setup ───────────────
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: false, // use true if port 465
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: "9a5af3001@smtp-brevo.com",
+    pass: process.env.BREVO_API_KEY,
   },
 });
 
