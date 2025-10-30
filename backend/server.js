@@ -26,7 +26,7 @@ app.use("/uploads/projects", express.static(path.join(__dirname, "uploads/projec
 
 
 
-const client = new OAuth2Client(CLIENT_ID);
+const client = new OAuth2Client(process.env.CLIENT_ID);
 
 // ─────────────── MySQL Connection ───────────────
 const db = mysql.createConnection({
