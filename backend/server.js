@@ -1,4 +1,6 @@
 require("dotenv").config();
+const brevo = require("@getbrevo/brevo");
+
 const express = require("express");
 const router = express.Router();
 const mysql = require("mysql2");
@@ -175,22 +177,59 @@ tableQueries.forEach(query => {
 });
 
 
-// ─────────────── Nodemailer Setup ───────────────
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: "9a5af3001@smtp-brevo.com",
-    pass: process.env.BREVO_API_KEY,
-  },
-});
+// ─────────────── Brevo API Setup ───────────────
 
+const brevoClient = new brevo.TransactionalEmailsApi();
+brevoClient.setApiKey(
+  brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
 
-transporter.verify((err) => {
-  if (err) console.error("❌ Mail transporter error:", err);
-  else console.log("✅ Mail transporter ready");
-});
+// ✅ Function to send password reset email
+async function sendResetEmail(email, username, resetLink) {
+  const sendSmtpEmail = new brevo.SendSmtpEmail();
+  sendSmtpEmail.subject = "Password Reset Request";
+  sendSmtpEmail.htmlContent = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+      <h3>Hello ${username || "User"}</h3>
+      <p>You requested a password reset. Click below to reset your password:</p>
+      <p><a href="${resetLink}" style="color:#1a73e8;">Reset Password</a></p>
+      <p>This link will expire in 1 hour.</p>
+    </div>
+  `;
+  sendSmtpEmail.sender = { name: "Integrated-Career", email: "jerinaraja69@gmail.com" };
+  sendSmtpEmail.to = [{ email }];
+
+  await brevoClient.sendTransacEmail(sendSmtpEmail);
+  console.log(`✅ Password reset email sent to ${email}`);
+}
+
+// ✅ Function to send internship application email
+async function sendApplicationEmail(email, name, job, college, graduationYear, skills) {
+  const sendSmtpEmail = new brevo.SendSmtpEmail();
+  sendSmtpEmail.subject = `Application Received – ${job.title} Internship`;
+  sendSmtpEmail.htmlContent = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+      <p>Hi <b>${name}</b>,</p>
+      <p>Thank you for applying for the <b>${job.title}</b> internship.</p>
+      <p>We have received your application and our team will review it soon.</p>
+      <h3 style="margin-top:20px;">📌 Application Details:</h3>
+      <ul>
+        <li><b>College:</b> ${college}</li>
+        <li><b>Graduation Year:</b> ${graduationYear}</li>
+        <li><b>Skills:</b> ${skills}</li>
+        <li><b>Duration:</b> ${job.duration}</li>
+      </ul>
+      <p style="margin-top:20px;">Best of luck! 🚀</p>
+    </div>
+  `;
+  sendSmtpEmail.sender = { name: "Integrated-Career", email: "jeriaraja69@gmail.com" };
+  sendSmtpEmail.to = [{ email }];
+
+  await brevoClient.sendTransacEmail(sendSmtpEmail);
+  console.log(`✅ Application email sent to ${email}`);
+}
+
 
 // ─────────────── JWT Middleware ───────────────
 function verifyToken(req, res, next) {
@@ -432,44 +471,32 @@ function forgotPassword(role) {
       const token = jwt.sign({ id: user.id, role }, JWT_SECRET, { expiresIn: "1h" });
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-      // 🧹 Remove expired tokens
-      db.query("DELETE FROM password_resets WHERE expires_at < NOW()", () => {
-        db.query(
-          "INSERT INTO password_resets (user_id, email, role, token, expires_at, used_at) VALUES (?, ?, ?, ?, ?, NULL)",
-          [user.id, email, role, token, expiresAt],
-          (insertErr) => {
-            if (insertErr) {
-              console.error("❌ Password reset insert error:", insertErr.sqlMessage || insertErr);
-              return res.status(500).json({ error: "Failed to initiate password reset" });
-            }
+    // 🧹 Remove expired tokens
+db.query("DELETE FROM password_resets WHERE expires_at < NOW()", () => {
+  db.query(
+    "INSERT INTO password_resets (user_id, email, role, token, expires_at, used_at) VALUES (?, ?, ?, ?, ?, NULL)",
+    [user.id, email, role, token, expiresAt],
+    async (insertErr) => {  // ✅ make this async
+      if (insertErr) {
+        console.error("❌ Password reset insert error:", insertErr.sqlMessage || insertErr);
+        return res.status(500).json({ error: "Failed to initiate password reset" });
+      }
 
-            console.log("✅ Password reset stored for:", email);
+      console.log("✅ Password reset stored for:", email);
 
-            const resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}&email=${user.email}&role=${role}`;
+      const resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}&email=${user.email}&role=${role}`;
 
-            transporter.sendMail(
-              {
-                from: "jerinaraja69@gmail.com",
-                to: email,
-                subject: "Password Reset Request",
-                html: `
-                  <h3>Hello ${user.username || "User"}</h3>
-                  <p>You requested a password reset. Click below to reset your password:</p>
-                  <p><a href="${resetLink}" style="color:#1a73e8;">Reset Password</a></p>
-                  <p>This link will expire in 1 hour.</p>
-                `,
-              },
-              (mailErr) => {
-                if (mailErr) {
-                  console.error("❌ Email send error:", mailErr);
-                  return res.status(500).json({ error: "Failed to send email" });
-                }
-                res.json({ message: "✅ Password reset email sent successfully!" });
-              }
-            );
-          }
-        );
-      });
+      try {
+        await sendResetEmail(email, user.username, resetLink);
+        res.json({ message: "✅ Password reset email sent successfully!" });
+      } catch (err) {
+        console.error("❌ Email send error:", err);
+        res.status(500).json({ error: "Failed to send password reset email" });
+      }
+    }
+  );
+});
+
     });
   };
 }
@@ -631,7 +658,7 @@ app.get("/student/personal-info/:id", verifyToken, requireRole("student"), (req,
   });
 });
 
-// Apply
+// Apply for a job
 app.post("/apply/:jobId", verifyToken, requireRole("student"), uploadResume.single("resume"), (req, res) => {
   const studentId = req.user.id;
   const jobId = req.params.jobId;
@@ -641,13 +668,16 @@ app.post("/apply/:jobId", verifyToken, requireRole("student"), uploadResume.sing
     return res.status(400).json({ error: "Missing required fields" });
 
   const resumePath = req.file.path;
+
   db.query("SELECT * FROM jobs WHERE id = ?", [jobId], (err, jobResults) => {
     if (err) return res.status(500).json({ error: "Server error fetching job" });
     if (jobResults.length === 0) return res.status(404).json({ error: "Job not found" });
 
     const job = jobResults[0];
+
     db.query(
-      `INSERT INTO applications (student_id, job_id, name, college, email, resume, linkedin, github, graduation_year, skills, domain, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO applications (student_id, job_id, name, college, email, resume, linkedin, github, graduation_year, skills, domain, duration)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         studentId,
         jobId,
@@ -662,36 +692,21 @@ app.post("/apply/:jobId", verifyToken, requireRole("student"), uploadResume.sing
         job.domain,
         job.duration,
       ],
-      (err2) => {
+      async (err2) => {
         if (err2) {
-          if (err2.code === "ER_DUP_ENTRY") return res.status(400).json({ error: "Already applied" });
+          if (err2.code === "ER_DUP_ENTRY")
+            return res.status(400).json({ error: "Already applied" });
           return res.status(500).json({ error: "Failed to apply" });
         }
 
-        // Send confirmation email
-        transporter.sendMail(
-          {
-            from: "jerinaraja69@gmail.com",
-            to: email,
-            subject: `Application Received – ${job.title} Internship`,
-            html: `
-              <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <p>Hi <b>${name}</b>,</p>
-                <p>Thank you for applying for the <b>${job.title}</b> internship.</p>
-                <p>We have received your application and our team will review it soon.</p>
-                <h3 style="margin-top:20px;">📌 Application Details:</h3>
-                <ul>
-                  <li><b>College:</b> ${college}</li>
-                  <li><b>Graduation Year:</b> ${graduationYear}</li>
-                  <li><b>Skills:</b> ${skills}</li>
-                  <li><b>Duration:</b> ${job.duration}</li>
-                </ul>
-                <p style="margin-top:20px;">Best of luck! 🚀</p>
-              </div>
-            `,
-          },
-          () => res.json({ message: "✅ Applied successfully!" })
-        );
+        // Send confirmation email using Brevo
+        try {
+          await sendApplicationEmail(email, name, job, college, graduationYear, skills);
+          res.json({ message: "✅ Applied successfully and confirmation email sent!" });
+        } catch (emailErr) {
+          console.error("❌ Email send error:", emailErr);
+          res.status(500).json({ error: "Applied successfully, but email failed to send" });
+        }
       }
     );
   });
