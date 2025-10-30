@@ -1,9 +1,25 @@
 {
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend"
-  },
-  "start": {
-    "cmd": "npm start --prefix backend"
+    "nixpacksPlan": {
+      "phases": {
+        "install": {
+          "cmds": [
+            "npm install --prefix backend",
+            "npm install --prefix frontend"
+          ]
+        },
+        "build": {
+          "cmds": [
+            "npm run build --prefix frontend"
+          ]
+        },
+        "start": {
+          "cmds": [
+            "npm start --prefix backend"
+          ]
+        }
+      }
+    }
   }
 }
