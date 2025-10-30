@@ -177,12 +177,15 @@ tableQueries.forEach(query => {
 
 // ─────────────── Nodemailer Setup ───────────────
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false, // use true if port 465
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
+
 
 transporter.verify((err) => {
   if (err) console.error("❌ Mail transporter error:", err);
@@ -446,7 +449,7 @@ function forgotPassword(role) {
 
             transporter.sendMail(
               {
-                from: process.env.GMAIL_USER,
+                from: "jerinaraja69@gmail.com",
                 to: email,
                 subject: "Password Reset Request",
                 html: `
@@ -668,7 +671,7 @@ app.post("/apply/:jobId", verifyToken, requireRole("student"), uploadResume.sing
         // Send confirmation email
         transporter.sendMail(
           {
-            from: process.env.GMAIL_USER,
+            from: "jerinaraja69@gmail.com",
             to: email,
             subject: `Application Received – ${job.title} Internship`,
             html: `
