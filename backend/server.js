@@ -24,9 +24,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // serve r
 app.use("/uploads/resumes", express.static(path.join(__dirname, "uploads/resumes")));
 app.use("/uploads/projects", express.static(path.join(__dirname, "uploads/projects")));
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
-const CLIENT_ID = process.env.CLIENT_ID;
-const JWT_SECRET = process.env.JWT_SECRET;
+
 
 const client = new OAuth2Client(CLIENT_ID);
 
